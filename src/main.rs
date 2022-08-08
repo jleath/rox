@@ -4,12 +4,19 @@ use std::io::{self, Write};
 use std::path::Path;
 use std::process;
 
-struct Interpreter {}
+struct Interpreter {
+    had_error: bool,
+}
 
 impl Interpreter {
     fn run_file(&mut self, path: &Path) {
         match fs::read_to_string(path) {
-            Ok(source) => self.run(&source),
+            Ok(source) => {
+                self.run(&source);
+                if self.had_error {
+                    process::exit(65);
+                }
+            }
             Err(e) => {
                 eprintln!("{}", e);
                 process::exit(64);
@@ -29,11 +36,26 @@ impl Interpreter {
                 .expect("Error reading input");
 
             self.run(&line);
+            self.had_error = false;
         }
     }
 
     fn run(&mut self, source: &str) {
-        print!("{}", source);
+        let scanner = Scanner::new(source);
+        let tokens = scanner.scanTokens();
+
+        for token in tokens {
+            println!("{}", token);
+        }
+    }
+
+    fn error(&mut self, line: u32, message: &str) {
+        self.report(line, "", message);
+    }
+
+    fn report(&mut self, line: u32, location: &str, message: &str) {
+        eprintln!("[line {}] Error {}: {}", line, location, message);
+        self.had_error = true;
     }
 }
 
