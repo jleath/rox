@@ -1,6 +1,6 @@
 [package]
 name = "rox"
-author = "Josh Leath <joshua.leath@icloud.com>"
+authors = ["Josh Leath <joshua.leath@icloud.com>"]
 description = "An interpreter for the Lox programming language"
 version = "0.1.0"
 edition = "2021"

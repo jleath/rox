@@ -1,15 +1,27 @@
 use clap::Parser;
+use std::fs;
 use std::path::Path;
+use std::process;
 
 struct Interpreter {}
 
 impl Interpreter {
-    fn run_file(&mut self, _path: &Path) {
-        todo!()
+    fn run_file(&mut self, path: &Path) {
+        match fs::read_to_string(path) {
+            Ok(source) => self.run(&source),
+            Err(e) => {
+                eprintln!("{}", e);
+                process::exit(64);
+            }
+        }
     }
 
     fn run_prompt(&mut self) {
         todo!()
+    }
+
+    fn run(&mut self, _source: &str) {
+        todo!();
     }
 }
 
