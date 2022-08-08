@@ -1,5 +1,6 @@
 use clap::Parser;
 use std::fs;
+use std::io::{self, Write};
 use std::path::Path;
 use std::process;
 
@@ -17,11 +18,22 @@ impl Interpreter {
     }
 
     fn run_prompt(&mut self) {
-        todo!()
+        let mut line = String::from("");
+        loop {
+            print!("> ");
+            io::stdout().flush().unwrap();
+
+            // If user input is invalid (ex: non utf8), panic
+            io::stdin()
+                .read_line(&mut line)
+                .expect("Error reading input");
+
+            self.run(&line);
+        }
     }
 
-    fn run(&mut self, _source: &str) {
-        todo!();
+    fn run(&mut self, source: &str) {
+        print!("{}", source);
     }
 }
 
