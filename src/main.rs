@@ -1,18 +1,28 @@
+#![allow(dead_code)]
+
 use clap::Parser;
 use std::fs;
 use std::io::{self, Write};
 use std::path::Path;
 use std::process;
 
+mod scanner;
+mod token;
+
+use crate::scanner::{Scanner, ScannerError};
+
 struct Interpreter {
     had_error: bool,
 }
 
 impl Interpreter {
+    fn new() -> Self {
+        Interpreter { had_error: false }
+    }
     fn run_file(&mut self, path: &Path) {
         match fs::read_to_string(path) {
             Ok(source) => {
-                self.run(&source);
+                self.run(source);
                 if self.had_error {
                     process::exit(65);
                 }
@@ -25,8 +35,8 @@ impl Interpreter {
     }
 
     fn run_prompt(&mut self) {
-        let mut line = String::from("");
         loop {
+            let mut line = String::from("");
             print!("> ");
             io::stdout().flush().unwrap();
 
@@ -35,25 +45,32 @@ impl Interpreter {
                 .read_line(&mut line)
                 .expect("Error reading input");
 
-            self.run(&line);
+            self.run(String::from(line.trim()));
             self.had_error = false;
         }
     }
 
-    fn run(&mut self, source: &str) {
-        let scanner = Scanner::new(source);
-        let tokens = scanner.scanTokens();
+    fn run(&mut self, source: String) {
+        let mut scanner = Scanner::new(source);
 
-        for token in tokens {
-            println!("{}", token);
+        match scanner.scan_tokens() {
+            Ok(tokens) => {
+                for token in tokens {
+                    println!("{:?}", token);
+                }
+            }
+            Err(e) => match e {
+                ScannerError::UnterminatedString(line) => self.error(line, "Unterminated String"),
+                ScannerError::UnexpectedChar(line) => self.error(line, "Unexpected character"),
+            },
         }
     }
 
-    fn error(&mut self, line: u32, message: &str) {
+    fn error(&mut self, line: usize, message: &str) {
         self.report(line, "", message);
     }
 
-    fn report(&mut self, line: u32, location: &str, message: &str) {
+    fn report(&mut self, line: usize, location: &str, message: &str) {
         eprintln!("[line {}] Error {}: {}", line, location, message);
         self.had_error = true;
     }
@@ -68,7 +85,7 @@ struct InterpreterArgs {
 }
 
 fn main() {
-    let mut interpreter = Interpreter {};
+    let mut interpreter = Interpreter::new();
     let cli = InterpreterArgs::parse();
     match cli.script_path {
         Some(path) => interpreter.run_file(Path::new(&path)),
