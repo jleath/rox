@@ -25,11 +25,17 @@ lazy_static! {
     };
 }
 
+/// `ScannerError` is an enum of errors that can occur while scanning tokens.
 pub enum ScannerError {
+    /// An `UnexpectedChar` error occurs if the scanner encounters a byte that
+    /// it does not know how to handle.
     UnexpectedChar(usize),
+    /// An `UnterminatedString` error occurs if the scanner finds an unterminated
+    /// string literal.
     UnterminatedString(usize),
 }
 
+/// `Scanner` transforms a `String` into a `Vec` of Lox `Token`s.
 pub struct Scanner {
     source: Vec<u8>,
     tokens: Vec<Token>,
@@ -39,6 +45,9 @@ pub struct Scanner {
 }
 
 impl Scanner {
+    /// Create an empty `Scanner`.
+    /// The `Scanner` will be populated with a `Vec<u8>` containing the result
+    /// of converting `source` into bytes.
     pub fn new(source: String) -> Self {
         Scanner {
             source: source.into_bytes(),
@@ -49,12 +58,14 @@ impl Scanner {
         }
     }
 
+    /// `scan_tokens` parses the bytes held by the `Scanner` and returns an immutable reference
+    /// to a `Vec` of `Token`s.
+    /// If an error occurs while scanning, it will be returned with the number of the line
+    ///  on which the error was found.
     pub fn scan_tokens(&mut self) -> Result<&Vec<Token>, ScannerError> {
         while !self.at_end() {
             self.start = self.current;
-            if let Err(e) = self.scan_token() {
-                return Err(e);
-            }
+            self.scan_token()?;
         }
 
         self.tokens.push(Token::new(
