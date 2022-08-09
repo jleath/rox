@@ -75,4 +75,23 @@ impl Token {
             line,
         }
     }
+
+    pub fn token_type(&self) -> TokenType {
+        self.token_type
+    }
+
+    pub fn literal(&self) -> Literal {
+        if let Some(value) = self.literal.clone() {
+            return value;
+        }
+        Literal::Nil
+    }
+
+    pub fn line(&self) -> usize {
+        self.line
+    }
+
+    pub fn lexeme(&self) -> String {
+        self.lexeme.clone()
+    }
 }

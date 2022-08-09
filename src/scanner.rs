@@ -28,14 +28,13 @@ lazy_static! {
 /// `ScannerError` is an enum of errors that can occur while scanning tokens.
 pub enum ScannerError {
     /// An `UnexpectedChar` error occurs if the scanner encounters a byte that
-    /// it does not know how to handle.
+    /// it does not know how to handle
     UnexpectedChar(usize),
     /// An `UnterminatedString` error occurs if the scanner finds an unterminated
     /// string literal.
     UnterminatedString(usize),
 }
 
-/// `Scanner` transforms a `String` into a `Vec` of Lox `Token`s.
 pub struct Scanner {
     source: Vec<u8>,
     tokens: Vec<Token>,

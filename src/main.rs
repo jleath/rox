@@ -6,10 +6,17 @@ use std::io::{self, Write};
 use std::path::Path;
 use std::process;
 
+mod astprinter;
+mod expr;
+mod parser;
 mod scanner;
 mod token;
 
+use crate::astprinter::AstPrinter;
+use crate::parser::ParseError;
+use crate::parser::Parser as LoxParser;
 use crate::scanner::{Scanner, ScannerError};
+use crate::token::{Token, TokenType};
 
 struct Interpreter {
     had_error: bool,
@@ -55,19 +62,42 @@ impl Interpreter {
 
         match scanner.scan_tokens() {
             Ok(tokens) => {
-                for token in tokens {
-                    println!("{:?}", token);
+                let mut parser = LoxParser::new(tokens.to_owned());
+                let result = parser.parse();
+                if result.is_err() {
+                    match result.unwrap_err() {
+                        ParseError::UnbalancedParens(token, message)
+                        | ParseError::UnknownPrimary(token, message) => {
+                            self.parse_error(token, &message);
+                        }
+                    }
+                } else {
+                    println!("{}", AstPrinter::new().print(*(result.unwrap())));
                 }
             }
             Err(e) => match e {
-                ScannerError::UnterminatedString(line) => self.error(line, "Unterminated String"),
-                ScannerError::UnexpectedChar(line) => self.error(line, "Unexpected character"),
+                ScannerError::UnterminatedString(line) => {
+                    self.scan_error(line, "Unterminated String")
+                }
+                ScannerError::UnexpectedChar(line) => self.scan_error(line, "Unexpected character"),
             },
         }
     }
 
-    fn error(&mut self, line: usize, message: &str) {
+    fn scan_error(&mut self, line: usize, message: &str) {
         self.report(line, "", message);
+    }
+
+    fn parse_error(&mut self, token: Token, message: &str) {
+        if token.token_type() == TokenType::Eof {
+            self.report(token.line(), " at end", message);
+        } else {
+            self.report(
+                token.line(),
+                format!(" at '{}'", token.lexeme()).as_str(),
+                message,
+            );
+        }
     }
 
     fn report(&mut self, line: usize, location: &str, message: &str) {
